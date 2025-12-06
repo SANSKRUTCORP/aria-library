@@ -42,3 +42,17 @@ To enable the CI/CD pipeline, go to **Settings > Secrets and variables > Actions
 - `AWS_ACCESS_KEY_ID`: Your AWS Access Key ID.
 - `AWS_SECRET_ACCESS_KEY`: Your AWS Secret Access Key.
 
+## Local Deployment
+
+To deploy to specific environments (dev/prod) from your local machine, use the provided helper script:
+
+```bash
+# Deploy to Development
+./scripts/deploy.sh dev apply
+
+# Deploy to Production
+./scripts/deploy.sh prod apply
+```
+
+This script manages Terraform workspaces and applies the corresponding configuration from `terraform/envs/<env>.tfvars`.
+
