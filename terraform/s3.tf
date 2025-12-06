@@ -56,7 +56,7 @@ resource "aws_iam_role_policy" "s3_access" {
           "s3:DeleteObject",
           "s3:ListBucket"
         ]
-        Effect   = "Allow"
+        Effect = "Allow"
         Resource = [
           aws_s3_bucket.asset_store.arn,
           "${aws_s3_bucket.asset_store.arn}/*"
