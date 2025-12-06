@@ -47,11 +47,11 @@ resource "aws_security_group" "app" {
   }
 
   ingress {
-    description = "SSH from anywhere (restrict in prod)"
+    description = "SSH from allowed IPs"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # TODO: Restrict to admin IPs
+    cidr_blocks = var.ssh_allowed_cidr_blocks
   }
 
   egress {
@@ -67,18 +67,36 @@ resource "aws_security_group" "app" {
   }
 }
 
+# Data source for Ubuntu 22.04 LTS AMI
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"] # Canonical
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
 # EC2 Instance
 resource "aws_instance" "dspace" {
-  ami           = "ami-0c7217cdde317cfec" # Ubuntu 22.04 LTS (us-east-1) - Verify AMI ID for region
-  instance_type = "t3.large"
-  subnet_id     = aws_subnet.public_1.id
-  key_name      = var.key_name # User needs to provide this
+  ami                  = data.aws_ami.ubuntu.id
+  instance_type        = var.instance_type
+  subnet_id            = aws_subnet.public_1.id
+  key_name             = var.key_name
+  iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
 
   vpc_security_group_ids = [aws_security_group.app.id]
 
   root_block_device {
     volume_size = 50
     volume_type = "gp3"
+    encrypted   = true
   }
 
   user_data = file("${path.module}/../scripts/install_dspace.sh")
@@ -93,4 +111,16 @@ variable "key_name" {
   description = "Name of the SSH key pair"
   type        = string
   default     = "aria-key" # Placeholder
+}
+
+variable "instance_type" {
+  description = "EC2 instance type"
+  type        = string
+  default     = "t3.large"
+}
+
+variable "ssh_allowed_cidr_blocks" {
+  description = "List of CIDR blocks allowed to SSH to EC2 instances. Use specific IPs for production."
+  type        = list(string)
+  default     = ["0.0.0.0/0"] # WARNING: Restrict this in production!
 }

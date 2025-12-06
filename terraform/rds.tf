@@ -35,18 +35,27 @@ resource "aws_security_group" "db" {
 }
 
 resource "aws_db_instance" "default" {
-  identifier           = "${var.project_name}-db"
-  allocated_storage    = 20
-  storage_type         = "gp3"
-  engine               = "postgres"
-  engine_version       = "16.1"
-  instance_class       = "db.t3.medium"
-  db_name              = "dspace"
-  username             = "dspace"
-  password             = var.db_password
-  parameter_group_name = "default.postgres16"
-  skip_final_snapshot  = true # Set to false for prod
-  publicly_accessible  = false
+  identifier                = "${var.project_name}-db"
+  allocated_storage         = var.db_allocated_storage
+  storage_type              = "gp3"
+  engine                    = "postgres"
+  engine_version            = "16.1"
+  instance_class            = var.db_instance_class
+  db_name                   = "dspace"
+  username                  = "dspace"
+  password                  = var.db_password
+  parameter_group_name      = "default.postgres16"
+  skip_final_snapshot       = var.skip_final_snapshot
+  final_snapshot_identifier = var.skip_final_snapshot ? null : "${var.project_name}-db-final-snapshot"
+  publicly_accessible       = false
+
+  # Backup configuration
+  backup_retention_period = var.db_backup_retention_period
+  backup_window           = var.db_backup_window
+  maintenance_window      = var.db_maintenance_window
+
+  # Enable automated backups
+  enabled_cloudwatch_logs_exports = ["postgresql"]
 
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.db.id]
@@ -58,8 +67,44 @@ resource "aws_db_instance" "default" {
 }
 
 variable "db_password" {
-  description = "Database password"
+  description = "Database password (required - should be passed via env var or secrets manager)"
   type        = string
   sensitive   = true
-  default     = "changeme123" # Placeholder - should be passed via env var or secrets manager
+  # No default - must be provided
+}
+
+variable "db_allocated_storage" {
+  description = "Allocated storage for RDS instance in GB"
+  type        = number
+  default     = 20
+}
+
+variable "db_instance_class" {
+  description = "RDS instance class"
+  type        = string
+  default     = "db.t3.medium"
+}
+
+variable "skip_final_snapshot" {
+  description = "Skip final snapshot when deleting RDS instance. Should be false for production."
+  type        = bool
+  default     = true
+}
+
+variable "db_backup_retention_period" {
+  description = "Number of days to retain automated backups"
+  type        = number
+  default     = 7
+}
+
+variable "db_backup_window" {
+  description = "Preferred backup window (UTC)"
+  type        = string
+  default     = "03:00-04:00"
+}
+
+variable "db_maintenance_window" {
+  description = "Preferred maintenance window (UTC)"
+  type        = string
+  default     = "sun:04:00-sun:05:00"
 }

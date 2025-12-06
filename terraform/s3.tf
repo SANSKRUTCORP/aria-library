@@ -24,6 +24,15 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "asset_store" {
   }
 }
 
+resource "aws_s3_bucket_public_access_block" "asset_store" {
+  bucket = aws_s3_bucket.asset_store.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 # IAM Role for EC2 to access S3
 resource "aws_iam_role" "ec2_s3_access" {
   name = "${var.project_name}-ec2-s3-role"
