@@ -38,3 +38,8 @@ output "s3_bucket_arn" {
   value       = aws_s3_bucket.asset_store.arn
 }
 
+output "alb_dns_name" {
+  description = "DNS name of the Load Balancer"
+  value       = aws_lb.main.dns_name
+}
+

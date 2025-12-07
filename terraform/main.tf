@@ -29,3 +29,15 @@ variable "environment" {
   type        = string
   default     = "prod"
 }
+
+variable "ssl_certificate_arn" {
+  description = "ARN of the ACM certificate for HTTPS"
+  type        = string
+  default     = ""
+}
+
+variable "domain_name" {
+  description = "Domain name for the application"
+  type        = string
+  default     = ""
+}
